@@ -1,366 +1,868 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Food Truck Admin Control Panel — Alturas</title>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    :root {
-      --bg: #0d0d1a;
-      --card: #151525;
-      --surface: #080810;
-      --accent: #2a5298;
-      --accent-light: #4a7fd4;
-      --accent2: #dc2626;
-      --accent3: #3ecf8e;
-      --text: #e8eaf0;
-      --muted: #8a8aa0;
-      --border: #252538;
-      --radius: 10px;
-    }
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Admin Dashboard — Alturas Food Truck Control Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --bg: #090a10;
+  --surface: #11131f;
+  --card: #181b2a;
+  --card-hover: #1f2336;
+  --accent: #2a5298;
+  --accent-light: #4a7fd4;
+  --accent2: #dc2626;
+  --accent3: #3ecf8e;
+  --warning: #f59e0b;
+  --text: #e8eaf0;
+  --muted: #71778d;
+  --border: #23273c;
+  --radius: 12px;
+}
 
-    * { margin:0; padding:0; box-sizing:border-box; font-family:'DM Sans', sans-serif; }
-    body { background: var(--bg); color: var(--text); padding: 30px 20px; display: flex; justify-content: center; min-height: 100vh; }
-    .container { width: 100%; max-width: 950px; }
-    
-    .card { background: var(--card); border: 1px solid var(--border); padding: 28px; border-radius: var(--radius); margin-bottom: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-    h1, h2 { font-family: 'Bebas Neue', sans-serif; letter-spacing: 2px; color: var(--text); }
-    h1 { font-size: 32px; }
-    h2 { font-size: 24px; margin-bottom: 18px; color: var(--accent-light); }
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'DM Sans', sans-serif; }
+body { background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
 
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    @media(max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } }
+/* HEADER */
+header {
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 0 32px; height: 70px; display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+}
+.brand { display: flex; align-items: center; gap: 14px; }
+.brand-icon { font-size: 24px; }
+.brand-title { font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 2px; color: var(--text); }
+.brand-sub { font-size: 10px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+.user-menu { display: flex; align-items: center; gap: 14px; }
 
-    .form-group { margin-bottom: 16px; display: flex; flex-direction: column; gap: 6px; }
-    label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
-    input, select { padding: 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: #fff; outline: none; font-size: 14px; transition: border-color .2s; }
-    input:focus, select:focus { border-color: var(--accent-light); }
+/* LOGIN CARD */
+.login-wrap { display: flex; align-items: center; justify-content: center; flex: 1; padding: 40px 20px; }
+.login-card { background: var(--card); border: 1px solid var(--border); padding: 40px; border-radius: 16px; width: 100%; max-width: 420px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+.login-title { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 2px; color: var(--accent-light); margin-bottom: 8px; text-align: center; }
+.login-sub { font-size: 13px; color: var(--muted); text-align: center; margin-bottom: 28px; }
 
-    .btn { padding: 12px 20px; background: var(--accent); color: #fff; border: none; border-radius: 6px; cursor: pointer; font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 2px; transition: background .2s; text-align: center; }
-    .btn:hover { background: var(--accent-light); }
-    .btn-secondary { background: #333; }
-    .btn-secondary:hover { background: #444; }
-    .btn-danger { background: var(--accent2); font-size: 12px; padding: 6px 12px; font-family: 'DM Sans', sans-serif; font-weight: 600; text-transform: uppercase; }
-    .btn-danger:hover { background: #ef4444; }
-    .btn-edit { background: #d97706; font-size: 12px; padding: 6px 12px; font-family: 'DM Sans', sans-serif; font-weight: 600; text-transform: uppercase; margin-right: 6px; }
-    .btn-edit:hover { background: #f59e0b; }
+/* FORM CONTROLS */
+.form-group { margin-bottom: 18px; display: flex; flex-direction: column; gap: 6px; }
+.form-group label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+input, select, textarea {
+  width: 100%; padding: 11px 14px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--text); font-size: 13px; outline: none; transition: all .2s;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--accent-light); box-shadow: 0 0 0 2px rgba(74,127,212,0.2); }
+textarea { resize: vertical; min-height: 70px; }
 
-    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-    th, td { border: 1px solid var(--border); padding: 12px; text-align: left; font-size: 13px; }
-    th { background: var(--surface); color: var(--muted); text-transform: uppercase; font-size: 11px; letter-spacing: 1px; }
-    
-    .status-badge { font-size: 11px; font-weight: 600; color: var(--accent3); }
-    .file-hint { font-size: 11px; color: var(--muted); margin-top: 4px; }
-  </style>
+/* BUTTONS */
+.btn {
+  padding: 10px 18px; border-radius: 8px; border: none; font-weight: 600; font-size: 13px;
+  cursor: pointer; transition: all .2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-light); }
+.btn-secondary { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
+.btn-secondary:hover { border-color: var(--accent-light); color: var(--accent-light); }
+.btn-danger { background: rgba(220,38,38,0.15); border: 1px solid rgba(220,38,38,0.3); color: #f87171; }
+.btn-danger:hover { background: var(--accent2); color: #fff; }
+.btn-warning { background: var(--warning); color: #000; font-weight: 700; }
+.btn-sm { padding: 6px 12px; font-size: 11px; }
+
+/* DASHBOARD GRID & CARDS */
+.dashboard-container { padding: 32px; max-width: 1600px; margin: 0 auto; width: 100%; }
+.card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 24px; margin-bottom: 32px; }
+
+.title-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 24px; position: relative; transition: all .25s; overflow: hidden;
+}
+.title-card.disabled { opacity: 0.5; cursor: not-allowed; }
+.title-card.disabled::after {
+  content: 'Coming Soon'; position: absolute; top: 16px; right: 16px;
+  background: var(--surface); border: 1px solid var(--border); color: var(--muted);
+  font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 20px; text-transform: uppercase;
+}
+.card-head { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+.card-icon { width: 44px; height: 44px; border-radius: 10px; background: rgba(42,82,152,0.15); border: 1px solid rgba(42,82,152,0.3); color: var(--accent-light); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+.card-title { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 1px; color: var(--text); }
+.card-desc { font-size: 12px; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
+
+/* FILTERS BAR */
+.filter-bar { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; background: var(--surface); padding: 14px; border-radius: 10px; border: 1px solid var(--border); align-items: center; }
+.filter-item { flex: 1; min-width: 140px; }
+
+/* MODALS */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(6px); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 20px; }
+.modal-overlay.open { display: flex; }
+.modal-box { background: var(--card); border: 1px solid var(--border); border-radius: 16px; width: 100%; max-width: 850px; max-height: 90vh; overflow-y: auto; padding: 32px; box-shadow: 0 25px 60px rgba(0,0,0,0.6); position: relative; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 16px; }
+.modal-close { background: transparent; border: none; color: var(--muted); font-size: 24px; cursor: pointer; }
+.modal-close:hover { color: var(--accent2); }
+
+/* TABLES & LISTS */
+table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+th, td { border: 1px solid var(--border); padding: 12px; text-align: left; font-size: 12px; }
+th { background: var(--surface); color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; font-size: 10px; }
+tr:hover { background: rgba(255,255,255,0.02); }
+
+/* VIEW SWITCHER & TRUCK CARDS */
+.view-switcher { display: flex; gap: 8px; margin-bottom: 16px; }
+.trucks-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+.truck-preview-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; padding: 12px; position: relative; }
+.truck-preview-img { aspect-ratio: 4/3; background: var(--card); border-radius: 6px; overflow: hidden; margin-bottom: 10px; }
+.truck-preview-img img, .truck-preview-img iframe { width: 100%; height: 100%; object-fit: cover; border: none; }
+
+/* CRM SIDE PANEL LAYOUT */
+.crm-layout { display: grid; grid-template-columns: 220px 1fr; gap: 24px; }
+.crm-nav { display: flex; flex-direction: column; gap: 8px; border-right: 1px solid var(--border); padding-right: 16px; }
+.crm-tab { padding: 12px 16px; border-radius: 8px; background: transparent; border: 1px solid transparent; color: var(--muted); text-align: left; font-weight: 600; font-size: 13px; cursor: pointer; transition: all .2s; }
+.crm-tab:hover { color: var(--text); background: var(--surface); }
+.crm-tab.active { background: rgba(42,82,152,0.2); border-color: var(--accent); color: var(--accent-light); }
+
+/* STATUS BADGES */
+.badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+.badge-new { background: rgba(59,130,246,0.2); color: #60a5fa; }
+.badge-done { background: rgba(62,207,142,0.2); color: #3ecf8e; }
+.badge-warn { background: rgba(245,158,11,0.2); color: #f59e0b; }
+.badge-danger { background: rgba(220,38,38,0.2); color: #f87171; }
+</style>
 </head>
 <body>
 
-<div class="container">
+<header>
+  <div class="brand">
+    <div class="brand-icon">🚚</div>
+    <div>
+      <div class="brand-title">Alturas Food Truck Admin</div>
+      <div class="brand-sub">Management & CRM Panel</div>
+    </div>
+  </div>
+  <div class="user-menu" id="userNav" style="display:none;">
+    <button class="btn btn-secondary btn-sm" onclick="handleLogout()">Logout</button>
+  </div>
+</header>
 
-  <!-- ADMIN LOGIN CARD -->
-  <div id="loginSection" class="card" style="max-width: 420px; margin: 60px auto;">
-    <h2>Admin Login</h2>
+<!-- LOGIN SCREEN -->
+<div class="login-wrap" id="loginSection">
+  <div class="login-card">
+    <div class="login-title">Admin Sign In</div>
+    <div class="login-sub">Enter credentials to access the management portal</div>
     <div class="form-group">
       <label>Email Address</label>
-      <input type="email" id="loginEmail" placeholder="admincos@alturas.com" required />
+      <input type="email" id="loginEmail" placeholder="admincos@alturas.com" required/>
     </div>
     <div class="form-group">
       <label>Password</label>
-      <input type="password" id="loginPassword" placeholder="••••••••" required />
+      <input type="password" id="loginPassword" placeholder="••••••••" required/>
     </div>
-    <button class="btn" style="width:100%;" onclick="handleLogin()">Sign In</button>
+    <button class="btn btn-primary" style="width:100%; margin-top:10px;" onclick="handleLogin()">Sign In</button>
   </div>
+</div>
 
-  <!-- MAIN ADMIN DASHBOARD -->
-  <div id="dashboardSection" style="display:none;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
-      <h1>Alturas Food Truck Admin</h1>
-      <button class="btn btn-secondary" style="font-size:14px; padding:8px 16px;" onclick="handleLogout()">Logout</button>
+<!-- DASHBOARD CONTENT -->
+<div class="dashboard-container" id="dashboardSection" style="display:none;">
+
+  <div class="card-grid">
+
+    <!-- 1. CALENDAR OVERVIEW & FILTERS CARD -->
+    <div class="title-card">
+      <div class="card-head">
+        <div class="card-icon">📅</div>
+        <div>
+          <div class="card-title">Schedule Overview & Filters</div>
+          <div class="card-desc">Filter and inspect food truck visits across properties</div>
+        </div>
+      </div>
+      <div class="filter-bar">
+        <div class="filter-item">
+          <label class="form-group" style="margin:0;"><span style="font-size:10px; color:var(--muted); font-weight:700;">PROPERTY</span>
+            <select id="overviewPropFilter" onchange="renderOverviewVisits()">
+              <option value="all">All Properties</option>
+              <option value="Northcreek">Northcreek</option>
+              <option value="985 Space Center">985 Space Center</option>
+              <option value="1055 Newport">1055 Newport</option>
+              <option value="Garden Gateway">Garden Gateway</option>
+              <option value="Presidio">Presidio</option>
+            </select>
+          </label>
+        </div>
+        <div class="filter-item">
+          <label class="form-group" style="margin:0;"><span style="font-size:10px; color:var(--muted); font-weight:700;">FOOD TRUCK</span>
+            <select id="overviewTruckFilter" onchange="renderOverviewVisits()">
+              <option value="all">All Food Trucks</option>
+            </select>
+          </label>
+        </div>
+        <div class="filter-item">
+          <label class="form-group" style="margin:0;"><span style="font-size:10px; color:var(--muted); font-weight:700;">MONTH RANGE</span>
+            <input type="month" id="overviewMonthFilter" onchange="renderOverviewVisits()"/>
+          </label>
+        </div>
+      </div>
+      <button class="btn btn-secondary" style="width:100%;" onclick="openModal('calendarModal')">View Interactive Calendar</button>
     </div>
 
-    <!-- ADD / EDIT BOOKING FORM CARD -->
-    <div class="card">
-      <h2 id="formHeader">Add Food Truck Visit</h2>
-      <input type="hidden" id="editingId" value="" />
-
-      <div class="grid-2">
-        <div class="form-group">
-          <label>Food Truck Name *</label>
-          <input type="text" id="truckName" placeholder="e.g. Tacos El Rey" required />
-        </div>
-        <div class="form-group">
-          <label>Property Location *</label>
-          <select id="propertyName" required>
-            <option value="Northcreek">Northcreek</option>
-            <option value="985 Space Center">985 Space Center</option>
-            <option value="1055 Newport">1055 Newport</option>
-            <option value="Garden Gateway">Garden Gateway</option>
-            <option value="Presidio">Presidio</option>
-          </select>
+    <!-- 2. EDIT & DELETE BOOKINGS CARD -->
+    <div class="title-card">
+      <div class="card-head">
+        <div class="card-icon">🛠</div>
+        <div>
+          <div class="card-title">Manage Visits (Edit & Delete)</div>
+          <div class="card-desc">View existing bookings in Card or List layout, edit details, or remove visits</div>
         </div>
       </div>
+      <button class="btn btn-primary" style="width:100%;" onclick="openManageVisitsModal()">Open Visit Manager</button>
+    </div>
 
-      <div class="grid-2">
-        <div class="form-group">
-          <label>Visit Date *</label>
-          <input type="date" id="visitDate" required />
-        </div>
-        <div class="form-group">
-          <label>Time Slot *</label>
-          <input type="text" id="timeSlot" placeholder="11:00 AM - 2:00 PM" required />
+    <!-- 3. ADD NEW BOOKING CARD -->
+    <div class="title-card">
+      <div class="card-head">
+        <div class="card-icon">➕</div>
+        <div>
+          <div class="card-title">Schedule New Visit</div>
+          <div class="card-desc">Book a truck with smart date-conflict and same-week warning checks</div>
         </div>
       </div>
+      <button class="btn btn-primary" style="width:100%;" onclick="openModal('addBookingModal')">Add New Visit</button>
+    </div>
 
-      <div class="form-group">
-        <label>Menu File (Image or PDF)</label>
-        <input type="file" id="menuFile" accept="image/*,application/pdf" />
-        <div class="file-hint" id="currentFileHint">Uploading a new file will replace any existing menu.</div>
+    <!-- 4. FOOD TRUCK DIRECTORY CARD -->
+    <div class="title-card">
+      <div class="card-head">
+        <div class="card-icon">📋</div>
+        <div>
+          <div class="card-title">Food Trucks Directory</div>
+          <div class="card-desc">Manage active & archived vendor list, contact info, and menus</div>
+        </div>
       </div>
+      <button class="btn btn-secondary" style="width:100%;" onclick="openModal('truckDirectoryModal')">Manage Directory</button>
+    </div>
 
-      <div style="display:flex; gap:10px; margin-top:10px;">
-        <button class="btn" style="flex:1;" id="saveBtn" onclick="saveBooking()">Save Visit to Calendar</button>
-        <button class="btn btn-secondary" id="cancelEditBtn" style="display:none;" onclick="resetForm()">Cancel Edit</button>
+    <!-- 5. SCHEDULING FORMS (PRESET) -->
+    <div class="title-card disabled">
+      <div class="card-head">
+        <div class="card-icon">📝</div>
+        <div>
+          <div class="card-title">Scheduling Forms</div>
+          <div class="card-desc">Self-service submission portal for vendor schedule requests</div>
+        </div>
+      </div>
+      <button class="btn btn-secondary" style="width:100%; pointer-events:none;">Preset Portal</button>
+    </div>
+
+    <!-- 6. TENANT FEEDBACK & CRM CARD -->
+    <div class="title-card">
+      <div class="card-head">
+        <div class="card-icon">💬</div>
+        <div>
+          <div class="card-title">Tenant CRM & Feedback</div>
+          <div class="card-desc">Review tenant recommendations, notification requests, and comments</div>
+        </div>
+      </div>
+      <button class="btn btn-primary" style="width:100%;" onclick="openModal('crmModal')">Open CRM Panel</button>
+    </div>
+
+    <!-- 7. REPORTS & ANALYTICS (BLANK) -->
+    <div class="title-card disabled">
+      <div class="card-head">
+        <div class="card-icon">📊</div>
+        <div>
+          <div class="card-title">Reports & Analytics</div>
+          <div class="card-desc">Analytics dashboard on property visit frequency and popularity</div>
+        </div>
+      </div>
+      <button class="btn btn-secondary" style="width:100%; pointer-events:none;">View Reports</button>
+    </div>
+
+    <!-- 8. HELP & DOCUMENTS (BLANK) -->
+    <div class="title-card disabled">
+      <div class="card-head">
+        <div class="card-icon">❓</div>
+        <div>
+          <div class="card-title">Help & Documentation</div>
+          <div class="card-desc">Self-help guides and documentation on operating the control panel</div>
+        </div>
+      </div>
+      <button class="btn btn-secondary" style="width:100%; pointer-events:none;">Open Documentation</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ================= MODALS ================= -->
+
+<!-- MODAL 1: CALENDAR VIEW -->
+<div class="modal-overlay" id="calendarModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="card-title">Interactive Schedule Calendar</div>
+      <button class="modal-close" onclick="closeModal('calendarModal')">&times;</button>
+    </div>
+    <div id="overviewVisitsTableWrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Food Truck</th>
+            <th>Property</th>
+            <th>Time Frame</th>
+          </tr>
+        </thead>
+        <tbody id="overviewVisitsBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL 2: MANAGE VISITS (CARD/LIST VIEW) -->
+<div class="modal-overlay" id="manageVisitsModal">
+  <div class="modal-box" style="max-width:1000px;">
+    <div class="modal-header">
+      <div class="card-title">Manage Food Truck Visits</div>
+      <button class="modal-close" onclick="closeModal('manageVisitsModal')">&times;</button>
+    </div>
+
+    <div class="filter-bar">
+      <div class="filter-item"><input type="date" id="manageDateFilter" onchange="renderManageVisits()"/></div>
+      <div class="filter-item">
+        <select id="managePropFilter" onchange="renderManageVisits()">
+          <option value="all">All Properties</option>
+          <option value="Northcreek">Northcreek</option>
+          <option value="985 Space Center">985 Space Center</option>
+          <option value="1055 Newport">1055 Newport</option>
+          <option value="Garden Gateway">Garden Gateway</option>
+          <option value="Presidio">Presidio</option>
+        </select>
+      </div>
+      <div class="filter-item">
+        <select id="manageTruckFilter" onchange="renderManageVisits()">
+          <option value="all">All Food Trucks</option>
+        </select>
       </div>
     </div>
 
-    <!-- CURRENT SCHEDULED BOOKINGS TABLE -->
-    <div class="card">
-      <h2>Scheduled Visits</h2>
-      <div style="overflow-x:auto;">
-        <table>
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Food Truck</th>
-              <th>Property</th>
-              <th>Time Slot</th>
-              <th>Menu</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="bookingsTable">
-            <tr><td colspan="6" style="text-align:center; color:var(--muted);">Loading scheduled visits...</td></tr>
-          </tbody>
-        </table>
-      </div>
+    <div class="view-switcher">
+      <button class="btn btn-secondary btn-sm" id="btnCardView" onclick="switchManageView('card')">🃏 Card View</button>
+      <button class="btn btn-secondary btn-sm" id="btnListView" onclick="switchManageView('list')">📋 List View</button>
     </div>
 
-    <!-- USER RECOMMENDATIONS TABLE -->
-    <div class="card">
-      <h2>Tenant Truck Recommendations</h2>
-      <div style="overflow-x:auto;">
-        <table>
-          <thead>
-            <tr>
-              <th>Truck Name</th>
-              <th>Property</th>
-              <th>Submitted By</th>
-              <th>Contact / Link</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody id="recommendationsTable">
-            <tr><td colspan="5" style="text-align:center; color:var(--muted);">Loading recommendations...</td></tr>
-          </tbody>
-        </table>
+    <div id="manageCardViewContainer" class="trucks-card-grid"></div>
+    <div id="manageListViewContainer" style="display:none;">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Truck Name</th>
+            <th>Property</th>
+            <th>Time</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="manageListTbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL 3: ADD NEW BOOKING -->
+<div class="modal-overlay" id="addBookingModal">
+  <div class="modal-box" style="max-width:500px;">
+    <div class="modal-header">
+      <div class="card-title">Schedule New Visit</div>
+      <button class="modal-close" onclick="closeModal('addBookingModal')">&times;</button>
+    </div>
+    
+    <div class="form-group">
+      <label>Food Truck *</label>
+      <select id="addTruckSelect"></select>
+    </div>
+    <div class="form-group">
+      <label>Property *</label>
+      <select id="addPropSelect">
+        <option value="Northcreek">Northcreek</option>
+        <option value="985 Space Center">985 Space Center</option>
+        <option value="1055 Newport">1055 Newport</option>
+        <option value="Garden Gateway">Garden Gateway</option>
+        <option value="Presidio">Presidio</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Preferred Date *</label>
+      <input type="date" id="addDateInput"/>
+    </div>
+    <div class="form-group">
+      <label>Time Frame *</label>
+      <input type="text" id="addTimeInput" placeholder="11:00 AM - 2:00 PM"/>
+    </div>
+
+    <!-- WARNING BANNER -->
+    <div id="weeklyWarningBox" style="display:none; margin-bottom:16px; padding:12px; background:rgba(245,158,11,0.15); border:1px solid var(--warning); border-radius:8px; font-size:12px; color:#fbbf24;">
+      <strong>⚠️ Weekly Schedule Alert:</strong>
+      <div id="weeklyWarningText" style="margin-top:4px;"></div>
+    </div>
+
+    <button class="btn btn-primary" style="width:100%;" id="submitBookingBtn" onclick="processNewBooking()">Submit Booking</button>
+  </div>
+</div>
+
+<!-- MODAL 4: FOOD TRUCK DIRECTORY -->
+<div class="modal-overlay" id="truckDirectoryModal">
+  <div class="modal-box" style="max-width:900px;">
+    <div class="modal-header">
+      <div class="card-title">Food Trucks Directory</div>
+      <button class="modal-close" onclick="closeModal('truckDirectoryModal')">&times;</button>
+    </div>
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <div class="view-switcher" style="margin:0;">
+        <button class="btn btn-secondary btn-sm" id="btnActiveTrucks" onclick="switchDirectoryTab('active')">Active Trucks</button>
+        <button class="btn btn-secondary btn-sm" id="btnArchivedTrucks" onclick="switchDirectoryTab('archive')">Archive List</button>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="openAddDirectoryTruckModal()">+ Add New Food Truck</button>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Food Truck Name</th>
+          <th>Contact Email</th>
+          <th>Phone</th>
+          <th>Menu File</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="directoryTbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- MODAL 5: CRM & TENANT FEEDBACK -->
+<div class="modal-overlay" id="crmModal">
+  <div class="modal-box" style="max-width:1100px;">
+    <div class="modal-header">
+      <div class="card-title">Tenant Feedback & CRM Panel</div>
+      <button class="modal-close" onclick="closeModal('crmModal')">&times;</button>
+    </div>
+
+    <div class="crm-layout">
+      <div class="crm-nav">
+        <button class="crm-tab active" id="tabRecs" onclick="switchCrmTab('recs')">Truck Recommendations</button>
+        <button class="crm-tab" id="tabNotifs" onclick="switchCrmTab('notifs')">Schedule List Requests</button>
+        <button class="crm-tab" style="opacity:0.5; cursor:not-allowed;" disabled>Tenant Feedback (Preset)</button>
+      </div>
+
+      <div>
+        <!-- RECS TAB -->
+        <div id="crmRecsPanel">
+          <table>
+            <thead>
+              <tr>
+                <th>Truck & Property</th>
+                <th>Submitted By</th>
+                <th>Link / Details</th>
+                <th>Contact Status</th>
+                <th>Notes</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="recsTbody"></tbody>
+          </table>
+        </div>
+
+        <!-- NOTIFS TAB -->
+        <div id="crmNotifsPanel" style="display:none;">
+          <table>
+            <thead>
+              <tr>
+                <th>Tenant Name</th>
+                <th>Email</th>
+                <th>Company</th>
+                <th>Property</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="notifsTbody"></tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
-
 </div>
 
 <script>
-  const SUPABASE_URL = 'https://xgnhzvjacultlyvioifw.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhnbmh6dmphY3VsdGx5dmlvaWZ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4MTk1NTMsImV4cCI6MjEwNzM5NTU1M30.jddLUkGKhXXEqjeUsZAONYPsEBYsY6nMqgPpNKnWcEI';
-  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// SUPABASE CREDENTIALS
+const SUPABASE_URL = 'https://xgnhzvjacultlyvioifw.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhnbmh6dmphY3VsdGx5dmlvaWZ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4MTk1NTMsImV4cCI6MjEwNzM5NTU1M30.jddLUkGKhXXEqjeUsZAONYPsEBYsY6nMqgPpNKnWcEI';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  let allBookings = [];
+let allBookings = [];
+let allTrucks = [];
+let directoryTab = 'active';
+let manageView = 'card';
+let bypassWeeklyWarning = false;
 
-  async function handleLogin() {
-    const email = document.getElementById('loginEmail').value;
-    const password = document.getElementById('loginPassword').value;
-    const { error } = await sb.auth.signInWithPassword({ email, password });
-    if (error) alert('Login failed: ' + error.message);
-    else checkUser();
+// AUTHENTICATION
+async function handleLogin() {
+  const email = document.getElementById('loginEmail').value;
+  const password = document.getElementById('loginPassword').value;
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) alert('Login failed: ' + error.message);
+  else checkUser();
+}
+
+async function handleLogout() {
+  await sb.auth.signOut();
+  checkUser();
+}
+
+async function checkUser() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    document.getElementById('loginSection').style.display = 'none';
+    document.getElementById('userNav').style.display = 'flex';
+    document.getElementById('dashboardSection').style.display = 'block';
+    loadData();
+  } else {
+    document.getElementById('loginSection').style.display = 'flex';
+    document.getElementById('userNav').style.display = 'none';
+    document.getElementById('dashboardSection').style.display = 'none';
   }
+}
 
-  async function handleLogout() {
-    await sb.auth.signOut();
-    checkUser();
+async function loadData() {
+  const [bRes, tRes] = await Promise.all([
+    sb.from('bookings').select('*').order('visit_date', { ascending: true }),
+    sb.from('food_trucks').select('*').order('name', { ascending: true })
+  ]);
+  
+  allBookings = bRes.data || [];
+  allTrucks = tRes.data || [];
+
+  populateTruckDropdowns();
+  renderOverviewVisits();
+}
+
+function populateTruckDropdowns() {
+  const activeTrucks = allTrucks.filter(t => !t.is_archived);
+  const overviewSelect = document.getElementById('overviewTruckFilter');
+  const manageSelect = document.getElementById('manageTruckFilter');
+  const addSelect = document.getElementById('addTruckSelect');
+
+  overviewSelect.innerHTML = '<option value="all">All Food Trucks</option>';
+  manageSelect.innerHTML = '<option value="all">All Food Trucks</option>';
+  addSelect.innerHTML = '';
+
+  activeTrucks.forEach(t => {
+    overviewSelect.insertAdjacentHTML('beforeend', `<option value="${t.name}">${t.name}</option>`);
+    manageSelect.insertAdjacentHTML('beforeend', `<option value="${t.name}">${t.name}</option>`);
+    addSelect.insertAdjacentHTML('beforeend', `<option value="${t.name}">${t.name}</option>`);
+  });
+}
+
+// MODAL CONTROL
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// OVERVIEW CALENDAR
+function renderOverviewVisits() {
+  const p = document.getElementById('overviewPropFilter').value;
+  const t = document.getElementById('overviewTruckFilter').value;
+  const m = document.getElementById('overviewMonthFilter').value;
+
+  const filtered = allBookings.filter(b => {
+    const propMatch = p === 'all' || b.property_name === p;
+    const truckMatch = t === 'all' || b.truck_name === t;
+    const monthMatch = !m || (b.visit_date && b.visit_date.startsWith(m));
+    return propMatch && truckMatch && monthMatch;
+  });
+
+  const tbody = document.getElementById('overviewVisitsBody');
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--muted);">No visits match selected filters.</td></tr>';
+    return;
   }
+  tbody.innerHTML = filtered.map(b => `
+    <tr>
+      <td><strong>${b.visit_date}</strong></td>
+      <td>${b.truck_name}</td>
+      <td>${b.property_name}</td>
+      <td>${b.time_slot || 'TBD'}</td>
+    </tr>
+  `).join('');
+}
 
-  async function checkUser() {
-    const { data: { session } } = await sb.auth.getSession();
-    if (session) {
-      document.getElementById('loginSection').style.display = 'none';
-      document.getElementById('dashboardSection').style.display = 'block';
-      loadBookings();
-      loadRecommendations();
-    } else {
-      document.getElementById('loginSection').style.display = 'block';
-      document.getElementById('dashboardSection').style.display = 'none';
-    }
-  }
+// MANAGE VISITS (CARD/LIST VIEW)
+function openManageVisitsModal() {
+  renderManageVisits();
+  openModal('manageVisitsModal');
+}
 
-  async function loadBookings() {
-    const { data, error } = await sb.from('bookings').select('*').order('visit_date', { ascending: true });
-    if (error) return console.error(error);
-    allBookings = data || [];
-    const tbody = document.getElementById('bookingsTable');
-    if (!allBookings.length) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--muted);">No scheduled visits found.</td></tr>';
+function switchManageView(v) {
+  manageView = v;
+  document.getElementById('manageCardViewContainer').style.display = v === 'card' ? 'grid' : 'none';
+  document.getElementById('manageListViewContainer').style.display = v === 'list' ? 'block' : 'none';
+  renderManageVisits();
+}
+
+function renderManageVisits() {
+  const d = document.getElementById('manageDateFilter').value;
+  const p = document.getElementById('managePropFilter').value;
+  const t = document.getElementById('manageTruckFilter').value;
+
+  const filtered = allBookings.filter(b => {
+    const dateMatch = !d || b.visit_date === d;
+    const propMatch = p === 'all' || b.property_name === p;
+    const truckMatch = t === 'all' || b.truck_name === t;
+    return dateMatch && propMatch && truckMatch;
+  });
+
+  if (manageView === 'card') {
+    const container = document.getElementById('manageCardViewContainer');
+    if (!filtered.length) {
+      container.innerHTML = '<div style="color:var(--muted); text-align:center; grid-column:1/-1;">No visits found.</div>';
       return;
     }
-    tbody.innerHTML = allBookings.map(b => `
+    container.innerHTML = filtered.map(b => {
+      const isPdf = b.menu_url && b.menu_url.toLowerCase().includes('.pdf');
+      return `
+        <div class="truck-preview-card">
+          <div class="truck-preview-img">
+            ${b.menu_url ? (isPdf ? `<iframe src="${b.menu_url}"></iframe>` : `<img src="${b.menu_url}"/>`) : '<div style="padding:20px; text-align:center; color:var(--muted);">No Menu Attached</div>'}
+          </div>
+          <div style="font-weight:700; font-size:14px;">${b.truck_name}</div>
+          <div style="font-size:11px; color:var(--accent-light); font-weight:600;">${b.property_name}</div>
+          <div style="font-size:11px; color:var(--muted); margin-top:4px;">${b.visit_date} · ${b.time_slot || ''}</div>
+          <div style="margin-top:10px; display:flex; gap:6px;">
+            <button class="btn btn-danger btn-sm" style="width:100%;" onclick="deleteBooking(${b.id})">Delete</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  } else {
+    const tbody = document.getElementById('manageListTbody');
+    if (!filtered.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--muted);">No visits found.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = filtered.map(b => `
       <tr>
         <td><strong>${b.visit_date}</strong></td>
         <td>${b.truck_name}</td>
         <td>${b.property_name}</td>
         <td>${b.time_slot || 'TBD'}</td>
-        <td>${b.menu_url ? `<a href="${b.menu_url}" target="_blank" style="color:var(--accent-light);">View Menu</a>` : 'None'}</td>
-        <td>
-          <button class="btn btn-edit" onclick="startEdit(${b.id})">Edit</button>
-          <button class="btn btn-danger" onclick="deleteBooking(${b.id})">Delete</button>
-        </td>
+        <td><button class="btn btn-danger btn-sm" onclick="deleteBooking(${b.id})">Delete</button></td>
       </tr>
     `).join('');
   }
+}
 
-  async function saveBooking() {
-    const editingId = document.getElementById('editingId').value;
-    const truckName = document.getElementById('truckName').value.trim();
-    const propertyName = document.getElementById('propertyName').value;
-    const visitDate = document.getElementById('visitDate').value;
-    const timeSlot = document.getElementById('timeSlot').value.trim();
-    const fileInput = document.getElementById('menuFile');
+async function deleteBooking(id) {
+  if (!confirm('Are you sure you want to remove this scheduled visit?')) return;
+  await sb.from('bookings').delete().eq('id', id);
+  await loadData();
+  renderManageVisits();
+}
 
-    if (!truckName || !visitDate || !timeSlot) {
-      alert('Please fill in all required fields (Truck Name, Date, Time Slot).');
+// ADD BOOKING WITH CONFLICT / WEEKLY WARNINGS
+async function processNewBooking() {
+  const truckName = document.getElementById('addTruckSelect').value;
+  const propertyName = document.getElementById('addPropSelect').value;
+  const visitDate = document.getElementById('addDateInput').value;
+  const timeSlot = document.getElementById('addTimeInput').value.trim();
+
+  if (!visitDate || !timeSlot) return alert('Please enter both date and time frame.');
+
+  // 1. Same-Day Same-Property Conflict Check
+  const conflict = allBookings.find(b => b.visit_date === visitDate && b.property_name === propertyName);
+  if (conflict) {
+    alert(`Conflict Error: ${conflict.truck_name} is already booked at ${propertyName} on ${visitDate}. Cannot proceed.`);
+    return;
+  }
+
+  // 2. Same-Week Check for Northcreek (or any property)
+  if (!bypassWeeklyWarning) {
+    const targetDt = new Date(visitDate + 'T00:00:00');
+    const day = targetDt.getDay();
+    const mon = new Date(targetDt); mon.setDate(targetDt.getDate() - (day === 0 ? 6 : day - 1));
+    const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+
+    const weekStart = mon.toISOString().split('T')[0];
+    const weekEnd = sun.toISOString().split('T')[0];
+
+    const weeklyExisting = allBookings.find(b => b.property_name === propertyName && b.visit_date >= weekStart && b.visit_date <= weekEnd);
+
+    if (weeklyExisting) {
+      const warnBox = document.getElementById('weeklyWarningBox');
+      const warnTxt = document.getElementById('weeklyWarningText');
+      warnTxt.innerHTML = `<strong>${weeklyExisting.truck_name}</strong> is already booked at <strong>${propertyName}</strong> on ${weeklyExisting.visit_date} (${weeklyExisting.time_slot || 'TBD'}).`;
+      warnBox.style.display = 'block';
+
+      const submitBtn = document.getElementById('submitBookingBtn');
+      submitBtn.textContent = 'Confirm & Proceed Anyway';
+      submitBtn.classList.remove('btn-primary');
+      submitBtn.classList.add('btn-warning');
+
+      bypassWeeklyWarning = true;
       return;
     }
-
-    const saveBtn = document.getElementById('saveBtn');
-    saveBtn.disabled = true;
-    saveBtn.textContent = 'Saving...';
-
-    try {
-      let menuUrl = editingId ? (allBookings.find(b => b.id == editingId)?.menu_url || '') : '';
-
-      // Upload new file if selected
-      if (fileInput.files.length > 0) {
-        const file = fileInput.files[0];
-        const filePath = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
-        
-        const { error: uploadErr } = await sb.storage.from('Menus').upload(filePath, file);
-        if (uploadErr) throw uploadErr;
-
-        const { data } = sb.storage.from('Menus').getPublicUrl(filePath);
-        menuUrl = data.publicUrl;
-      }
-
-      if (editingId) {
-        // Update Existing Booking
-        const { error } = await sb.from('bookings').update({
-          truck_name: truckName,
-          property_name: propertyName,
-          visit_date: visitDate,
-          time_slot: timeSlot,
-          menu_url: menuUrl
-        }).eq('id', editingId);
-
-        if (error) throw error;
-        alert('Visit updated successfully!');
-      } else {
-        // Insert New Booking
-        const { error } = await sb.from('bookings').insert([{
-          truck_name: truckName,
-          property_name: propertyName,
-          visit_date: visitDate,
-          time_slot: timeSlot,
-          menu_url: menuUrl
-        }]);
-
-        if (error) throw error;
-        alert('New visit added to calendar!');
-      }
-
-      resetForm();
-      loadBookings();
-
-    } catch (err) {
-      alert('Error saving visit: ' + err.message);
-    } finally {
-      saveBtn.disabled = false;
-      saveBtn.textContent = 'Save Visit to Calendar';
-    }
   }
 
-  function startEdit(id) {
-    const b = allBookings.find(x => x.id === id);
-    if (!b) return;
+  // 3. Insert Booking
+  const truckObj = allTrucks.find(t => t.name === truckName);
+  const { error } = await sb.from('bookings').insert([{
+    truck_name: truckName,
+    property_name: propertyName,
+    visit_date: visitDate,
+    time_slot: timeSlot,
+    menu_url: truckObj?.menu_url || ''
+  }]);
 
-    document.getElementById('editingId').value = b.id;
-    document.getElementById('truckName').value = b.truck_name;
-    document.getElementById('propertyName').value = b.property_name;
-    document.getElementById('visitDate').value = b.visit_date;
-    document.getElementById('timeSlot').value = b.time_slot;
-    
-    document.getElementById('formHeader').textContent = 'Edit Food Truck Visit';
-    document.getElementById('saveBtn').textContent = 'Update Visit';
-    document.getElementById('cancelEditBtn').style.display = 'inline-block';
-    document.getElementById('currentFileHint').textContent = b.menu_url ? 'Current menu is attached. Select a new file only if replacing.' : 'No file currently attached.';
-    
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (error) alert('Error adding booking: ' + error.message);
+  else {
+    alert('Visit successfully booked!');
+    closeModal('addBookingModal');
+    resetBookingForm();
+    await loadData();
+  }
+}
+
+function resetBookingForm() {
+  document.getElementById('addDateInput').value = '';
+  document.getElementById('addTimeInput').value = '';
+  document.getElementById('weeklyWarningBox').style.display = 'none';
+  const submitBtn = document.getElementById('submitBookingBtn');
+  submitBtn.textContent = 'Submit Booking';
+  submitBtn.classList.add('btn-primary');
+  submitBtn.classList.remove('btn-warning');
+  bypassWeeklyWarning = false;
+}
+
+// DIRECTORY MANAGEMENT
+function switchDirectoryTab(t) {
+  directoryTab = t;
+  document.getElementById('btnActiveTrucks').classList.toggle('btn-primary', t === 'active');
+  document.getElementById('btnArchivedTrucks').classList.toggle('btn-primary', t === 'archive');
+  renderDirectory();
+}
+
+function renderDirectory() {
+  const filtered = allTrucks.filter(t => directoryTab === 'archive' ? t.is_archived : !t.is_archived);
+  const tbody = document.getElementById('directoryTbody');
+
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--muted);">No ${directoryTab} food trucks found.</td></tr>`;
+    return;
   }
 
-  function resetForm() {
-    document.getElementById('editingId').value = '';
-    document.getElementById('truckName').value = '';
-    document.getElementById('visitDate').value = '';
-    document.getElementById('timeSlot').value = '';
-    document.getElementById('menuFile').value = '';
-    
-    document.getElementById('formHeader').textContent = 'Add Food Truck Visit';
-    document.getElementById('saveBtn').textContent = 'Save Visit to Calendar';
-    document.getElementById('cancelEditBtn').style.display = 'none';
-    document.getElementById('currentFileHint').textContent = 'Uploading a new file will replace any existing menu.';
+  tbody.innerHTML = filtered.map(t => `
+    <tr>
+      <td><strong>${t.name}</strong></td>
+      <td>${t.email || 'N/A'}</td>
+      <td>${t.phone || 'N/A'}</td>
+      <td>${t.menu_url ? `<a href="${t.menu_url}" target="_blank" style="color:var(--accent-light);">View Menu</a>` : 'None'}</td>
+      <td>
+        <button class="btn btn-secondary btn-sm" onclick="toggleArchiveTruck(${t.id}, ${!t.is_archived})">${t.is_archived ? 'Unarchive' : 'Archive'}</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function toggleArchiveTruck(id, archiveState) {
+  await sb.from('food_trucks').update({ is_archived: archiveState }).eq('id', id);
+  await loadData();
+  renderDirectory();
+}
+
+async function openAddDirectoryTruckModal() {
+  const name = prompt('Enter Food Truck Name:');
+  if (!name) return;
+  const email = prompt('Enter Contact Email (optional):') || '';
+  const phone = prompt('Enter Phone Number (optional):') || '';
+
+  await sb.from('food_trucks').insert([{ name, email, phone }]);
+  await loadData();
+  renderDirectory();
+}
+
+// CRM & FEEDBACK
+function switchCrmTab(t) {
+  document.getElementById('tabRecs').classList.toggle('active', t === 'recs');
+  document.getElementById('tabNotifs').classList.toggle('active', t === 'notifs');
+  document.getElementById('crmRecsPanel').style.display = t === 'recs' ? 'block' : 'none';
+  document.getElementById('crmNotifsPanel').style.display = t === 'notifs' ? 'block' : 'none';
+
+  if (t === 'recs') loadCrmRecs();
+  else loadCrmNotifs();
+}
+
+async function loadCrmRecs() {
+  const { data } = await sb.from('recommendations').select('*').order('created_at', { ascending: false });
+  const tbody = document.getElementById('recsTbody');
+
+  if (!data || !data.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--muted);">No recommendations found.</td></tr>';
+    return;
   }
 
-  async function deleteBooking(id) {
-    if (!confirm('Are you sure you want to remove this visit from the schedule?')) return;
-    const { error } = await sb.from('bookings').delete().eq('id', id);
-    if (error) alert('Delete error: ' + error.message);
-    else loadBookings();
+  tbody.innerHTML = data.map(r => `
+    <tr>
+      <td><strong>${r.truck_name}</strong><br><span style="font-size:10px; color:var(--muted);">${r.property_name}</span></td>
+      <td>${r.user_name}<br><span style="font-size:10px; color:var(--muted);">${r.user_email}</span></td>
+      <td>${r.truck_link && r.truck_link !== 'N/A' ? `<a href="${r.truck_link}" target="_blank" style="color:var(--accent-light);">Link</a>` : 'None'}</td>
+      <td>
+        <select id="status_${r.id}">
+          <option value="New" ${r.status==='New'?'selected':''}>New</option>
+          <option value="Contacting" ${r.status==='Contacting'?'selected':''}>Contacting</option>
+          <option value="Booked" ${r.status==='Booked'?'selected':''}>Booked</option>
+          <option value="Unavailable" ${r.status==='Unavailable'?'selected':''}>Unavailable</option>
+          <option value="Paid Catering Only" ${r.status==='Paid Catering Only'?'selected':''}>Paid Catering Only</option>
+          <option value="Uninterested" ${r.status==='Uninterested'?'selected':''}>Uninterested</option>
+        </select>
+      </td>
+      <td><textarea id="notes_${r.id}">${r.notes || ''}</textarea></td>
+      <td><button class="btn btn-primary btn-sm" onclick="saveRecCrm(${r.id})">Save</button></td>
+    </tr>
+  `).join('');
+}
+
+async function saveRecCrm(id) {
+  const status = document.getElementById(`status_${id}`).value;
+  const notes = document.getElementById(`notes_${id}`).value;
+
+  await sb.from('recommendations').update({ status, notes }).eq('id', id);
+  alert('CRM record updated!');
+}
+
+async function loadCrmNotifs() {
+  const { data } = await sb.from('notifications').select('*').order('created_at', { ascending: false });
+  const tbody = document.getElementById('notifsTbody');
+
+  if (!data || !data.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--muted);">No schedule list requests found.</td></tr>';
+    return;
   }
 
-  async function loadRecommendations() {
-    const { data, error } = await sb.from('recommendations').select('*').order('created_at', { ascending: false });
-    if (error) return console.error(error);
-    const tbody = document.getElementById('recommendationsTable');
-    if (!data || !data.length) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--muted);">No tenant recommendations submitted yet.</td></tr>';
-      return;
-    }
-    tbody.innerHTML = data.map(r => `
-      <tr>
-        <td><strong>${r.truck_name}</strong></td>
-        <td>${r.property_name}</td>
-        <td>${r.user_name}<br><span style="font-size:11px; color:var(--muted);">${r.user_email}</span></td>
-        <td>${r.truck_link && r.truck_link !== 'N/A' ? `<a href="${r.truck_link}" target="_blank" style="color:var(--accent-light);">Link</a>` : 'None'}</td>
-        <td><button class="btn btn-danger" onclick="deleteRecommendation(${r.id})">Clear</button></td>
-      </tr>
-    `).join('');
-  }
+  tbody.innerHTML = data.map(n => `
+    <tr>
+      <td><strong>${n.full_name}</strong></td>
+      <td>${n.email}</td>
+      <td>${n.company || 'N/A'}</td>
+      <td>${n.property_name}</td>
+      <td>
+        <select onchange="updateNotifStatus(${n.id}, this.value)">
+          <option value="To Add" ${n.status==='To Add'?'selected':''}>To Add</option>
+          <option value="Added" ${n.status==='Added'?'selected':''}>Added</option>
+        </select>
+      </td>
+    </tr>
+  `).join('');
+}
 
-  async function deleteRecommendation(id) {
-    if (!confirm('Clear this recommendation?')) return;
-    await sb.from('recommendations').delete().eq('id', id);
-    loadRecommendations();
-  }
+async function updateNotifStatus(id, status) {
+  await sb.from('notifications').update({ status }).eq('id', id);
+}
 
-  checkUser();
+checkUser();
 </script>
 </body>
 </html>
