@@ -158,7 +158,7 @@ tr:hover { background: rgba(255,255,255,0.02); }
   </div>
   <a class="header-center" href="#">
     <div class="logo-box">
-      <img class="logo-badge" src="acp.png" alt="Alturas Capital Partners Logo"/>
+      <img class="logo-badge" src="https://xgnhzvjacultlyvioifw.supabase.co/storage/v1/object/public/Menus/acp.png" alt="Alturas Capital Partners Logo"/>
       <div>
         <div class="logo-title">ALTURAS CAPITAL PARTNERS</div>
         <div class="logo-sub">Food Truck Admin Control Portal</div>
@@ -173,7 +173,7 @@ tr:hover { background: rgba(255,255,255,0.02); }
 <!-- LOGIN SCREEN -->
 <div class="login-screen" id="loginSection">
   <div class="login-card">
-    <img class="login-logo" src="acp.png" alt="ACP Logo"/>
+    <img class="login-logo" src="https://xgnhzvjacultlyvioifw.supabase.co/storage/v1/object/public/Menus/acp.png" alt="ACP Logo"/>
     <div class="login-title">Admin Sign In</div>
     <div class="login-sub">Enter administrative credentials to access control panel</div>
     <div class="form-group">
@@ -184,7 +184,8 @@ tr:hover { background: rgba(255,255,255,0.02); }
       <label>Password</label>
       <input type="password" id="loginPassword" placeholder="••••••••" required/>
     </div>
-    <button class="btn btn-primary" style="width:100%; margin-top:12px;" onclick="handleLogin()">Sign In</button>
+    <button class="btn btn-primary" style="width:100%; margin-top:12px;" id="loginBtn" onclick="handleLogin()">Sign In</button>
+    <div id="loginStatus" style="font-size:12px; color:var(--danger); margin-top:14px; min-height:16px;"></div>
   </div>
 </div>
 
@@ -532,11 +533,32 @@ let bypassWeeklyWarning = false;
 
 // AUTHENTICATION
 async function handleLogin() {
-  const email = document.getElementById('loginEmail').value;
-  const password = document.getElementById('loginPassword').value;
-  const { error } = await sb.auth.signInWithPassword({ email, password });
-  if (error) alert('Login failed: ' + error.message);
-  else checkUser();
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value.trim();
+  const statusDiv = document.getElementById('loginStatus');
+  const loginBtn = document.getElementById('loginBtn');
+
+  if (!email || !password) {
+    statusDiv.textContent = 'Please enter both email and password.';
+    return;
+  }
+
+  statusDiv.textContent = 'Authenticating...';
+  loginBtn.disabled = true;
+
+  try {
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) {
+      statusDiv.textContent = 'Login failed: ' + error.message;
+    } else {
+      statusDiv.textContent = '';
+      checkUser();
+    }
+  } catch (err) {
+    statusDiv.textContent = 'An unexpected error occurred: ' + err.message;
+  } finally {
+    loginBtn.disabled = false;
+  }
 }
 
 async function handleLogout() {
@@ -660,7 +682,7 @@ function renderManageVisits() {
           </div>
           <div style="font-weight:700; font-size:14px; color:#fff;">${b.truck_name}</div>
           <div style="font-size:11px; color:var(--accent-light); font-weight:600;">${b.property_name}</div>
-          <div style="font-size:11px; color:var(--muted); margin-top:4px;">${b.visit_date} ·${b.time_slot || ''}</div>
+          <div style="font-size:11px; color:var(--muted); margin-top:4px;">${b.visit_date} · ${b.time_slot || ''}</div>
           <div style="margin-top:12px; display:flex; gap:6px;">
             <button class="btn btn-danger btn-sm" style="width:100%;" onclick="deleteBooking(${b.id})">Delete</button>
           </div>
@@ -703,7 +725,7 @@ async function processNewBooking() {
 
   const conflict = allBookings.find(b => b.visit_date === visitDate && b.property_name === propertyName);
   if (conflict) {
-    alert(`Conflict Error: ${conflict.truck_name} is already booked at ${propertyName} on${visitDate}. Cannot proceed.`);
+    alert(`Conflict Error: ${conflict.truck_name} is already booked at ${propertyName} on ${visitDate}. Cannot proceed.`);
     return;
   }
 
@@ -784,4 +806,115 @@ function renderDirectory() {
     <tr>
       <td><strong>${t.name}</strong></td>
       <td>${t.email || 'N/A'}</td>
-      <td>${t
+      <td>${t.phone || 'N/A'}</td>
+      <td>${t.menu_url ? `<a href="${t.menu_url}" target="_blank" style="color:var(--accent-light);">View Menu</a>` : 'None'}</td>
+      <td>
+        <button class="btn btn-secondary btn-sm" onclick="toggleArchiveTruck(${t.id}, ${!t.is_archived})">${t.is_archived ? 'Unarchive' : 'Archive'}</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function toggleArchiveTruck(id, archiveState) {
+  await sb.from('food_trucks').update({ is_archived: archiveState }).eq('id', id);
+  await loadData();
+  renderDirectory();
+}
+
+async function openAddDirectoryTruckModal() {
+  const name = prompt('Enter Food Truck Name:');
+  if (!name) return;
+  const email = prompt('Enter Contact Email (optional):') || '';
+  const phone = prompt('Enter Phone Number (optional):') || '';
+
+  await sb.from('food_trucks').insert([{ name, email, phone }]);
+  await loadData();
+  renderDirectory();
+}
+
+// CRM
+function switchCrmTab(t) {
+  document.getElementById('tabRecs').classList.toggle('active', t === 'recs');
+  document.getElementById('tabNotifs').classList.toggle('active', t === 'notifs');
+  document.getElementById('crmRecsPanel').style.display = t === 'recs' ? 'block' : 'none';
+  document.getElementById('crmNotifsPanel').style.display = t === 'notifs' ? 'block' : 'none';
+
+  if (t === 'recs') loadCrmRecs();
+  else loadCrmNotifs();
+}
+
+async function loadCrmRecs() {
+  const { data } = await sb.from('recommendations').select('*').order('created_at', { ascending: false });
+  const tbody = document.getElementById('recsTbody');
+
+  if (!data || !data.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--muted);">No recommendations found.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = data.map(r => `
+    <tr>
+      <td><strong>${r.truck_name}</strong><br><span style="font-size:10px; color:var(--muted);">${r.property_name}</span></td>
+      <td>${r.user_name}<br><span style="font-size:10px; color:var(--muted);">${r.user_email}</span></td>
+      <td>${r.truck_link && r.truck_link !== 'N/A' ? `<a href="${r.truck_link}" target="_blank" style="color:var(--accent-light);">Link</a>` : 'None'}</td>
+      <td>
+        <select id="status_${r.id}">
+          <option value="New" ${r.status==='New'?'selected':''}>New</option>
+          <option value="Contacting" ${r.status==='Contacting'?'selected':''}>Contacting</option>
+          <option value="Booked" ${r.status==='Booked'?'selected':''}>Booked</option>
+          <option value="Unavailable" ${r.status==='Unavailable'?'selected':''}>Unavailable</option>
+          <option value="Paid Catering Only" ${r.status==='Paid Catering Only'?'selected':''}>Paid Catering Only</option>
+          <option value="Uninterested" ${r.status==='Uninterested'?'selected':''}>Uninterested</option>
+        </select>
+      </td>
+      <td><textarea id="notes_${r.id}">${r.notes || ''}</textarea></td>
+      <td><button class="btn btn-primary btn-sm" onclick="saveRecCrm(${r.id})">Save</button></td>
+    </tr>
+  `).join('');
+}
+
+async function saveRecCrm(id) {
+  const status = document.getElementById(`status_${id}`).value;
+  const notes = document.getElementById(`notes_${id}`).value;
+
+  await sb.from('recommendations').update({ status, notes }).eq('id', id);
+  alert('CRM record updated!');
+}
+
+async function loadCrmNotifs() {
+  const { data } = await sb.from('notifications').select('*').order('created_at', { ascending: false });
+  const tbody = document.getElementById('notifsTbody');
+
+  if (!data || !data.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--muted);">No schedule list requests found.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = data.map(n => `
+    <tr>
+      <td><strong>${n.full_name}</strong></td>
+      <td>${n.email}</td>
+      <td>${n.company || 'N/A'}</td>
+      <td>${n.property_name}</td>
+      <td>
+        <select onchange="updateNotifStatus(${n.id}, this.value)">
+          <option value="To Add" ${n.status==='To Add'?'selected':''}>To Add</option>
+          <option value="Added" ${n.status==='Added'?'selected':''}>Added</option>
+        </select>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function updateNotifStatus(id, status) {
+  await sb.from('notifications').update({ status }).eq('id', id);
+}
+
+// Event Listeners for enter key on login inputs
+document.getElementById('loginEmail').addEventListener('keydown', (e) => { if(e.key === 'Enter') handleLogin(); });
+document.getElementById('loginPassword').addEventListener('keydown', (e) => { if(e.key === 'Enter') handleLogin(); });
+
+checkUser();
+</script>
+</body>
+</html>
