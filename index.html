@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Food Truck Admin Control Panel — Alturas</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --bg: #0d0d1a;
+      --card: #151525;
+      --surface: #080810;
+      --accent: #2a5298;
+      --accent-light: #4a7fd4;
+      --accent2: #dc2626;
+      --accent3: #3ecf8e;
+      --text: #e8eaf0;
+      --muted: #8a8aa0;
+      --border: #252538;
+      --radius: 10px;
+    }
+
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'DM Sans', sans-serif; }
+    body { background: var(--bg); color: var(--text); padding: 30px 20px; display: flex; justify-content: center; min-height: 100vh; }
+    .container { width: 100%; max-width: 950px; }
+    
+    .card { background: var(--card); border: 1px solid var(--border); padding: 28px; border-radius: var(--radius); margin-bottom: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+    h1, h2 { font-family: 'Bebas Neue', sans-serif; letter-spacing: 2px; color: var(--text); }
+    h1 { font-size: 32px; }
+    h2 { font-size: 24px; margin-bottom: 18px; color: var(--accent-light); }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media(max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } }
+
+    .form-group { margin-bottom: 16px; display: flex; flex-direction: column; gap: 6px; }
+    label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+    input, select { padding: 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: #fff; outline: none; font-size: 14px; transition: border-color .2s; }
+    input:focus, select:focus { border-color: var(--accent-light); }
+
+    .btn { padding: 12px 20px; background: var(--accent); color: #fff; border: none; border-radius: 6px; cursor: pointer; font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 2px; transition: background .2s; text-align: center; }
+    .btn:hover { background: var(--accent-light); }
+    .btn-secondary { background: #333; }
+    .btn-secondary:hover { background: #444; }
+    .btn-danger { background: var(--accent2); font-size: 12px; padding: 6px 12px; font-family: 'DM Sans', sans-serif; font-weight: 600; text-transform: uppercase; }
+    .btn-danger:hover { background: #ef4444; }
+    .btn-edit { background: #d97706; font-size: 12px; padding: 6px 12px; font-family: 'DM Sans', sans-serif; font-weight: 600; text-transform: uppercase; margin-right: 6px; }
+    .btn-edit:hover { background: #f59e0b; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    th, td { border: 1px solid var(--border); padding: 12px; text-align: left; font-size: 13px; }
+    th { background: var(--surface); color: var(--muted); text-transform: uppercase; font-size: 11px; letter-spacing: 1px; }
+    
+    .status-badge { font-size: 11px; font-weight: 600; color: var(--accent3); }
+    .file-hint { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ADMIN LOGIN CARD -->
+  <div id="loginSection" class="card" style="max-width: 420px; margin: 60px auto;">
+    <h2>Admin Login</h2>
+    <div class="form-group">
+      <label>Email Address</label>
+      <input type="email" id="loginEmail" placeholder="admincos@alturas.com" required />
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="loginPassword" placeholder="••••••••" required />
+    </div>
+    <button class="btn" style="width:100%;" onclick="handleLogin()">Sign In</button>
+  </div>
+
+  <!-- MAIN ADMIN DASHBOARD -->
+  <div id="dashboardSection" style="display:none;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+      <h1>Alturas Food Truck Admin</h1>
+      <button class="btn btn-secondary" style="font-size:14px; padding:8px 16px;" onclick="handleLogout()">Logout</button>
+    </div>
+
+    <!-- ADD / EDIT BOOKING FORM CARD -->
+    <div class="card">
+      <h2 id="formHeader">Add Food Truck Visit</h2>
+      <input type="hidden" id="editingId" value="" />
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Food Truck Name *</label>
+          <input type="text" id="truckName" placeholder="e.g. Tacos El Rey" required />
+        </div>
+        <div class="form-group">
+          <label>Property Location *</label>
+          <select id="propertyName" required>
+            <option value="Northcreek">Northcreek</option>
+            <option value="985 Space Center">985 Space Center</option>
+            <option value="1055 Newport">1055 Newport</option>
+            <option value="Garden Gateway">Garden Gateway</option>
+            <option value="Presidio">Presidio</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Visit Date *</label>
+          <input type="date" id="visitDate" required />
+        </div>
+        <div class="form-group">
+          <label>Time Slot *</label>
+          <input type="text" id="timeSlot" placeholder="11:00 AM - 2:00 PM" required />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Menu File (Image or PDF)</label>
+        <input type="file" id="menuFile" accept="image/*,application/pdf" />
+        <div class="file-hint" id="currentFileHint">Uploading a new file will replace any existing menu.</div>
+      </div>
+
+      <div style="display:flex; gap:10px; margin-top:10px;">
+        <button class="btn" style="flex:1;" id="saveBtn" onclick="saveBooking()">Save Visit to Calendar</button>
+        <button class="btn btn-secondary" id="cancelEditBtn" style="display:none;" onclick="resetForm()">Cancel Edit</button>
+      </div>
+    </div>
+
+    <!-- CURRENT SCHEDULED BOOKINGS TABLE -->
+    <div class="card">
+      <h2>Scheduled Visits</h2>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Food Truck</th>
+              <th>Property</th>
+              <th>Time Slot</th>
+              <th>Menu</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="bookingsTable">
+            <tr><td colspan="6" style="text-align:center; color:var(--muted);">Loading scheduled visits...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- USER RECOMMENDATIONS TABLE -->
+    <div class="card">
+      <h2>Tenant Truck Recommendations</h2>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Truck Name</th>
+              <th>Property</th>
+              <th>Submitted By</th>
+              <th>Contact / Link</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="recommendationsTable">
+            <tr><td colspan="5" style="text-align:center; color:var(--muted);">Loading recommendations...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://xgnhzvjacultlyvioifw.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhnbmh6dmphY3VsdGx5dmlvaWZ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4MTk1NTMsImV4cCI6MjEwNzM5NTU1M30.jddLUkGKhXXEqjeUsZAONYPsEBYsY6nMqgPpNKnWcEI';
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let allBookings = [];
+
+  async function handleLogin() {
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) alert('Login failed: ' + error.message);
+    else checkUser();
+  }
+
+  async function handleLogout() {
+    await sb.auth.signOut();
+    checkUser();
+  }
+
+  async function checkUser() {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) {
+      document.getElementById('loginSection').style.display = 'none';
+      document.getElementById('dashboardSection').style.display = 'block';
+      loadBookings();
+      loadRecommendations();
+    } else {
+      document.getElementById('loginSection').style.display = 'block';
+      document.getElementById('dashboardSection').style.display = 'none';
+    }
+  }
+
+  async function loadBookings() {
+    const { data, error } = await sb.from('bookings').select('*').order('visit_date', { ascending: true });
+    if (error) return console.error(error);
+    allBookings = data || [];
+    const tbody = document.getElementById('bookingsTable');
+    if (!allBookings.length) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--muted);">No scheduled visits found.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = allBookings.map(b => `
+      <tr>
+        <td><strong>${b.visit_date}</strong></td>
+        <td>${b.truck_name}</td>
+        <td>${b.property_name}</td>
+        <td>${b.time_slot || 'TBD'}</td>
+        <td>${b.menu_url ? `<a href="${b.menu_url}" target="_blank" style="color:var(--accent-light);">View Menu</a>` : 'None'}</td>
+        <td>
+          <button class="btn btn-edit" onclick="startEdit(${b.id})">Edit</button>
+          <button class="btn btn-danger" onclick="deleteBooking(${b.id})">Delete</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  async function saveBooking() {
+    const editingId = document.getElementById('editingId').value;
+    const truckName = document.getElementById('truckName').value.trim();
+    const propertyName = document.getElementById('propertyName').value;
+    const visitDate = document.getElementById('visitDate').value;
+    const timeSlot = document.getElementById('timeSlot').value.trim();
+    const fileInput = document.getElementById('menuFile');
+
+    if (!truckName || !visitDate || !timeSlot) {
+      alert('Please fill in all required fields (Truck Name, Date, Time Slot).');
+      return;
+    }
+
+    const saveBtn = document.getElementById('saveBtn');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving...';
+
+    try {
+      let menuUrl = editingId ? (allBookings.find(b => b.id == editingId)?.menu_url || '') : '';
+
+      // Upload new file if selected
+      if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        const filePath = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+        
+        const { error: uploadErr } = await sb.storage.from('Menus').upload(filePath, file);
+        if (uploadErr) throw uploadErr;
+
+        const { data } = sb.storage.from('Menus').getPublicUrl(filePath);
+        menuUrl = data.publicUrl;
+      }
+
+      if (editingId) {
+        // Update Existing Booking
+        const { error } = await sb.from('bookings').update({
+          truck_name: truckName,
+          property_name: propertyName,
+          visit_date: visitDate,
+          time_slot: timeSlot,
+          menu_url: menuUrl
+        }).eq('id', editingId);
+
+        if (error) throw error;
+        alert('Visit updated successfully!');
+      } else {
+        // Insert New Booking
+        const { error } = await sb.from('bookings').insert([{
+          truck_name: truckName,
+          property_name: propertyName,
+          visit_date: visitDate,
+          time_slot: timeSlot,
+          menu_url: menuUrl
+        }]);
+
+        if (error) throw error;
+        alert('New visit added to calendar!');
+      }
+
+      resetForm();
+      loadBookings();
+
+    } catch (err) {
+      alert('Error saving visit: ' + err.message);
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Save Visit to Calendar';
+    }
+  }
+
+  function startEdit(id) {
+    const b = allBookings.find(x => x.id === id);
+    if (!b) return;
+
+    document.getElementById('editingId').value = b.id;
+    document.getElementById('truckName').value = b.truck_name;
+    document.getElementById('propertyName').value = b.property_name;
+    document.getElementById('visitDate').value = b.visit_date;
+    document.getElementById('timeSlot').value = b.time_slot;
+    
+    document.getElementById('formHeader').textContent = 'Edit Food Truck Visit';
+    document.getElementById('saveBtn').textContent = 'Update Visit';
+    document.getElementById('cancelEditBtn').style.display = 'inline-block';
+    document.getElementById('currentFileHint').textContent = b.menu_url ? 'Current menu is attached. Select a new file only if replacing.' : 'No file currently attached.';
+    
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function resetForm() {
+    document.getElementById('editingId').value = '';
+    document.getElementById('truckName').value = '';
+    document.getElementById('visitDate').value = '';
+    document.getElementById('timeSlot').value = '';
+    document.getElementById('menuFile').value = '';
+    
+    document.getElementById('formHeader').textContent = 'Add Food Truck Visit';
+    document.getElementById('saveBtn').textContent = 'Save Visit to Calendar';
+    document.getElementById('cancelEditBtn').style.display = 'none';
+    document.getElementById('currentFileHint').textContent = 'Uploading a new file will replace any existing menu.';
+  }
+
+  async function deleteBooking(id) {
+    if (!confirm('Are you sure you want to remove this visit from the schedule?')) return;
+    const { error } = await sb.from('bookings').delete().eq('id', id);
+    if (error) alert('Delete error: ' + error.message);
+    else loadBookings();
+  }
+
+  async function loadRecommendations() {
+    const { data, error } = await sb.from('recommendations').select('*').order('created_at', { ascending: false });
+    if (error) return console.error(error);
+    const tbody = document.getElementById('recommendationsTable');
+    if (!data || !data.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--muted);">No tenant recommendations submitted yet.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(r => `
+      <tr>
+        <td><strong>${r.truck_name}</strong></td>
+        <td>${r.property_name}</td>
+        <td>${r.user_name}<br><span style="font-size:11px; color:var(--muted);">${r.user_email}</span></td>
+        <td>${r.truck_link && r.truck_link !== 'N/A' ? `<a href="${r.truck_link}" target="_blank" style="color:var(--accent-light);">Link</a>` : 'None'}</td>
+        <td><button class="btn btn-danger" onclick="deleteRecommendation(${r.id})">Clear</button></td>
+      </tr>
+    `).join('');
+  }
+
+  async function deleteRecommendation(id) {
+    if (!confirm('Clear this recommendation?')) return;
+    await sb.from('recommendations').delete().eq('id', id);
+    loadRecommendations();
+  }
+
+  checkUser();
+</script>
+</body>
+</html>
